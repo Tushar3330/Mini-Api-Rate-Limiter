@@ -4,22 +4,20 @@ const logger = require('../../utils/logger');
 
 async function analyzeLogs() {
   try {
+    //reading and writing to the files
     const logFilePath = path.join(__dirname, '../../data/sample_api_logs.json');
     const outputPath = path.join(__dirname, 'output/summary.json');
-
-    // Read log file
     const rawData = await fs.readFile(logFilePath, 'utf-8');
     const logs = JSON.parse(rawData);
 
-    // Initialize data structures
+    // Initialize an array
     const ipCounts = {};
     const endpointCounts = {};
     const errors5xx = [];
     const errors4xx = [];
 
-    // Process logs
     logs.forEach(log => {
-      // Count IPs
+      // Count IP requests
       ipCounts[log.ip] = (ipCounts[log.ip] || 0) + 1;
       
       // Count endpoints
@@ -38,31 +36,26 @@ async function analyzeLogs() {
     });
 
     // Get top 5 IPs
-    const mostActiveIps = Object.entries(ipCounts)
-      .map(([ip, requests]) => ({ ip, requests }))
-      .sort((a, b) => b.requests - a.requests)
+    const mostActiveIps = Object.entries(ipCounts) .map(([ip, requests]) => ({ ip, requests }))
+  .sort((a, b) => b.requests - a.requests)
       .slice(0, 5);
 
     // Get top 5 endpoints
-    const topEndpoints = Object.entries(endpointCounts)
-      .map(([endpoint, requests]) => ({ endpoint, requests }))
-      .sort((a, b) => b.requests - a.requests)
+    const topEndpoints = Object.entries(endpointCounts).map(([endpoint, requests]) => ({ endpoint, requests })) .sort((a, b) => b.requests - a.requests)
       .slice(0, 5);
 
     // Prepare output
     const summary = {
-      most_active_ips: mostActiveIps,
-      top_endpoints: topEndpoints,
-      errors5xx,
+      most_active_ips: mostActiveIps, top_endpoints: topEndpoints, errors5xx,
       errors4xx,
     };
 
     // Write output
     await fs.writeFile(outputPath, JSON.stringify(summary, null, 2));
-    logger.info(`Analysis complete. Output saved to ${outputPath}`);
-    console.log('Analysis complete. Check output/summary.json');
+                     logger.info(`Analysis complete. Output saved to ${outputPath}`);
+                        console.log('Analysis complete. Check output/summary.json');
   } catch (error) {
-    logger.error(`Log analyzer error: ${error.message}`);
+       logger.error(`Log analyzer error: ${error.message}`);
     console.error('Error analyzing logs:', error.message);
   }
 }
