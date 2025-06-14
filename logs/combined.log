@@ -1,0 +1,7 @@
+{"level":"info","message":"Server running on http://localhost:3000","timestamp":"2025-06-14T21:32:38.310Z"}
+{"level":"info","message":"Request: GET /api/test from ::1","timestamp":"2025-06-14T21:32:45.650Z"}
+{"level":"info","message":"Connected to Redis","timestamp":"2025-06-14T21:32:46.312Z"}
+{"level":"info","message":"Processing request from IP: ::1","timestamp":"2025-06-14T21:32:47.300Z"}
+{"level":"info","message":"Request: GET /api/test from ::1","timestamp":"2025-06-14T21:33:48.557Z"}
+{"level":"info","message":"Processing request from IP: ::1","timestamp":"2025-06-14T21:33:49.545Z"}
+{"level":"info","message":"Analysis complete. Output saved to C:\\Users\\tusha\\Documents\\Projects\\Mini-Api-Rate-Limiter\\src\\log-analyzer\\output\\summary.json","timestamp":"2025-06-14T21:34:09.062Z"}
