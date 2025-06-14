@@ -4,8 +4,8 @@
   "description": "API Rate Limmiter and API Logs Analyzer ",
   "main": "src/rate-limitter/server.js",
   "scripts": {
-    "start:limiter": "node src/rate-limitter/server.js"
-  
+    "start:limiter": "node src/rate-limitter/server.js",
+    "analyze": "node src/log-analyzer/analyzer.js"
   },
 
   "keywords": [],
