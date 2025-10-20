@@ -6,7 +6,7 @@ let client;
 async function getClient() {
   if (!client) {
     client = createClient({
-      url: 'redis://default:DhgXDzzSyWMndOv1XC47Rv6s4ilICS49@redis-15731.c15.us-east-1-2.ec2.redns.redis-cloud.com:15731'
+      url: 'redis://default:DFT217XQtvlsTN6MZ3wuHLNVPocMkobz@redis-17120.crce179.ap-south-1-1.ec2.redns.redis-cloud.com:17120',
     });
 
     client.on('error', (err) => {
