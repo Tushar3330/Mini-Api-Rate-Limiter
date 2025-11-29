@@ -1,103 +1,122 @@
 # Mini API Rate Limiter & Log Analyzer
 
-This project contains two main components:
-
-1. **Mini API Rate Limiter**  
-2. **Log Analyzer for API Logs**
-
----
-
-## Table of Contents
-
-- [Features](#features)
-- [Setup Instructions](#setup-instructions)
-  - [1. Set Up Redis Enterprise Cloud](#1-set-up-redis-enterprise-cloud)
-  - [2. Clone the Repository](#2-clone-the-repository)
-  - [3. Install Dependencies](#3-install-dependencies)
-  - [4. Run the Project](#4-run-the-project)
-- [Project Structure](#project-structure)
-- [Rate Limiter Approach](#rate-limiter-approach)
-- [Log Analyzer Approach](#log-analyzer-approach)
-- [Sample Outputs](#sample-outputs)
-- [Testing the Rate Limiter](#testing-the-rate-limiter)
-
----
+A high-performance API rate limiting system with multi-worker concurrency and comprehensive log analysis capabilities.
 
 ## Features
 
-- **Sliding Window API Rate Limiting** with Redis for storing request timestamps.
-- **Log Analyzer** to identify top IPs, top endpoints, and highlight 4xx/5xx responses.
-- **Comprehensive Logging** for all major operations.
-
-
+- ✅ **Sliding Window Rate Limiting** with Redis (sorted sets + hash tables)
+- ✅ **Multi-Worker Clustering** for concurrent request handling
+- ✅ **Log Analysis** with latency distribution (p50, p95, p99) and error pattern detection
+- ✅ **Performance Optimized** for high-traffic scenarios
 ---
+## Quick Start
 
-## Setup Instructions
+### Prerequisites
+- Node.js (v14+)
+- Redis (cloud or local)
 
-
-- **Note:**  
-   Anyways i have added mine reddis connection details in the `src/rate-limiter/services/redisclient.js` file. so you can run the project without setting up your own Redis instance.
-
----
-### 1. ALTERNATIVELY
-
-- Sign up for a free account at [Redis Enterprise Cloud](https://redis.com/try-free/).
-- Create a new database and note the **Endpoint URL**, **Port**, and **Password**.
-- Update `src/rate-limiter/services/redisclient.js` with your Redis connection details:
-
-  ```js
-  url: 'redis://:<password>@<endpoint>:<port>'
-  ```
-
-
-### 2. Clone the Repository
+### Installation
 
 ```bash
-git clone <your-repo-link>
+git clone <your-repo-url>
 cd Mini-Api-Rate-Limiter
-```
-
----
-
-### 3. Install Dependencies
-
-```bash
 npm install
 ```
 
+### Configuration
+Update Redis connection in `src/rate-limitter/services/redisclient.js`:
+```javascript
+url: 'redis://:<password>@<endpoint>:<port>'
+```
 ---
 
-### 4. Run the Project
-
-#### Start the Rate Limiter API
+## Usage
+### 1. Start Rate Limiter Server
 
 ```bash
 npm run start:limiter
 ```
+Server runs on `http://localhost:3000`
 
-The API runs on [http://localhost:3000](http://localhost:3000).
+**Endpoints**:
+- `GET /api/test` - Rate-limited (10 req/min per IP)
+- `GET /api/unlimited` - No rate limit
 
-Endpoints:
+### 2. Run Log Analyzer
 
-- `GET /api/test` - Rate-limited endpoint (10 requests per minute per IP).
-- `GET /api/unlimited` - Non-rate-limited endpoint for comparison.
-
----
-**Test with:**
-
-```bash
-curl http://localhost:3000/api/test
-```
-
-#### Run the Log Analyzer
-
-Place your log file as `sample_api_logs.json` in the `data/` folder.
+Place your logs in `data/sample_api_logs.json`, then:
 
 ```bash
 npm run analyze
 ```
+Output saved to `src/log-analyzer/output/summary.json`
 
-This will process `logs.json` (from `data/`) and output results to `output/summary.json`.
+---
+## Testing
+
+### Test Rate Limiting (Sequential)
+```bash
+npm run test:sequential
+```
+**Expected**: Clean progression 1/10 → 2/10 → ... → 10/10 → BLOCKED
+
+### Test Concurrency (Multi-Worker)
+```bash
+npm run test:cluster
+```
+**Expected**: Different worker PIDs handling requests simultaneously
+
+### Manual Test
+```bash
+# Send multiple requests
+for i in {1..15}; do curl http://localhost:3000/api/test; sleep 0.2; done
+```
+
+---
+## What to Expect
+
+### Rate Limiter Logs
+```
+✅ Allowed | IP: ::1 | Worker PID 1234: 1 req(s) | Total in Redis: 1/10
+✅ Allowed | IP: ::1 | Worker PID 1235: 1 req(s) | Total in Redis: 2/10
+...
+✅ Allowed | IP: ::1 | Worker PID 1234: 5 req(s) | Total in Redis: 10/10
+🚫 BLOCKED | IP: ::1 | Worker PID 1236: 2 req(s) | Total in Redis: 10/10 - LIMIT EXCEEDED
+```
+
+**Key Observations**:
+- Different worker PIDs = concurrent processing
+- Redis count increases = rate limiting works across all workers
+- After 10 requests = 429 errors (Too Many Requests)
+
+### Log Analyzer Output
+```json
+{
+  "most_active_ips": [
+    { "ip": "192.168.1.1", "requests": 45 }
+  ],
+  "top_endpoints": [
+    { "endpoint": "/api/users", "requests": 127 }
+  ],
+  "latency_distribution_ms": {
+    "min": 12,
+    "max": 980,
+    "avg": 245,
+    "p50": 220,
+    "p95": 650,
+    "p99": 890
+  },
+  "error_patterns": {
+    "4xx_by_endpoint": {
+      "/api/auth (401)": 23,
+      "/api/users (403)": 12
+    },
+    "5xx_by_endpoint": {
+      "/api/orders (500)": 5
+    }
+  }
+}
+```
 
 ---
 
@@ -106,141 +125,37 @@ This will process `logs.json` (from `data/`) and output results to `output/summa
 ```
 Mini-Api-Rate-Limiter/
 ├── src/
-│   ├── rate-limiter/
+│   ├── rate-limitter/
+│   │   ├── server.js              # Clustering & master process
 │   │   ├── middleware/
-│   │   │   └── ratelimiter.js
+│   │   │   └── ratelimiter.js     # Rate limiting logic
 │   │   ├── routes/
-│   │   │   └── testapi.js
-│   │   ├── services/
-│   │   │   └── redisclient.js
-│   │   └── server.js
+│   │   │   └── testapi.js         # API endpoints
+│   │   └── services/
+│   │       └── redisclient.js     # Redis connection
 │   ├── log-analyzer/
-│   │   ├── analyzer.js
+│   │   ├── analyzer.js            # Log processing
 │   │   └── output/
-│   │       └── summary.json
+│   │       └── summary.json       # Results
 │   └── utils/
-│       └── logger.js
+│       └── logger.js              # Winston logger
+├── tests/
+│   ├── test-cluster.js            # Concurrency test
+│   └── test-sequential.js         # Rate limit test
 ├── data/
-│   └── sample_api_logs.json
-├── package.json
+│   └── sample_api_logs.json       # Sample logs
+├── IMPLEMENTATION.md              # Detailed technical guide
 └── README.md
 ```
 
----
+## Common Issues
 
-## Rate Limiter Approach
+**Q: I see "1/10" for multiple requests**
+- Race condition in concurrent requests (expected)
+- See `IMPLEMENTATION.md` for detailed explanation
+- Use `npm run test:sequential` for clean counting
 
-- **Algorithm:** Sliding window with Redis to track requests per IP within a 60-second window.
-- **Logic:**  
-  - Stores timestamps of requests in a Redis sorted set.
-  - Removes timestamps older than 60 seconds.
-  - Checks if the count exceeds 10.
-- **Endpoints:**
-  - `/api/test`: Rate-limited endpoint.
-  - `/api/unlimited`: No rate limit for testing.
-- **Redis:** Used for persistent storage of request timestamps.
-- **Error Handling:** Returns `429 Too Many Requests` when the limit is exceeded.
+**Q: All requests blocked immediately**
+- Wait 60 seconds for Redis window to expire
+- Or flush Redis: `redis-cli FLUSHALL`
 
----
-
-## Log Analyzer Approach
-
-- **Input:** Reads `sample_api_logs.json` from the `data/` folder.
-- **Processing:**
-  - Identifies top 5 most active IPs by request count.
-  - Identifies top 5 API endpoints by request count.
-  - Flags 5xx response codes.
-  - Flags 4xx response codes for further analysis.
-- **Output:** Saves summary to `output/summary.json` in JSON format.
-- **Error Handling:** Validates input file and handles missing or malformed data.
-
----
-
-## Sample Outputs
-
-### API Rate Limiter
-
-**Run the rate limiter:**
-
-```bash
-npm run start:limiter
-```
-
-**Test with:**
-
-```bash
-curl http://localhost:3000/api/test
-```
-
-**Response:**
-
-```json
-{"message":"Request successful"}
-```
-
-**Console logs:**
-
-```
-{"level":"info","message":"Server running on http://localhost:3000","timestamp":"2025-06-14T21:32:38.310Z"}
-{"level":"info","message":"Request: GET /api/test from ::1","timestamp":"2025-06-14T21:32:45.650Z"}
-{"level":"info","message":"Connected to Redis","timestamp":"2025-06-14T21:32:46.312Z"}
-{"level":"info","message":"Processing request from IP: ::1","timestamp":"2025-06-14T21:32:47.300Z"}
-```
-
----
-
-### Log Analyzer
-
-**Run the log analyzer:**
-
-```bash
-npm run analyze
-```
-
-**Console output:**
-
-```
-{"level":"info","message":"Analysis complete. Output saved to C:\\Users\\tusha\\Documents\\Projects\\Mini-Api-Rate-Limiter\\src\\log-analyzer\\output\\summary.json","timestamp":"2025-06-14T21:34:09.062Z"}
-Analysis complete. Check output/summary.json
-```
-
-**Sample `output/summary.json`:**
-
-```json
-{
-  "most_active_ips": [
-    {
-      "ip": "83.144.94.57",
-      "requests": 1
-    },
-    {
-      "ip": "146.24.177.177",
-      "requests": 1
-    },
-    {
-      "ip": "37.217.17.177",
-      "requests": 1
-    },
-    {
-      "ip": "114.65.65.39",
-      "requests": 1
-    },
-    {
-      "ip": "78.205.207.55",
-      "requests": 1
-    }
-  ]
-}
-```
-
----
-
-## Testing the Rate Limiter
-
-Use `curl` or Postman to test:
-
-```bash
-curl http://localhost:3000/api/test
-```
-
----

@@ -43,6 +43,43 @@
       "requests": 6
     }
   ],
+  "latency_distribution_ms": {
+    "min": 29,
+    "max": 992,
+    "avg": 531,
+    "p50": 524,
+    "p95": 946,
+    "p99": 992
+  },
+  "error_patterns": {
+    "4xx_by_endpoint": {
+      "/api/logout (403)": 6,
+      "/api/orders (401)": 2,
+      "/api/login (401)": 2,
+      "/api/logout (400)": 3,
+      "/api/users (403)": 1,
+      "/api/data (400)": 1,
+      "/api/data (404)": 2,
+      "/api/logout (404)": 3,
+      "/api/data (401)": 1,
+      "/api/orders (400)": 2,
+      "/api/users (400)": 3,
+      "/api/users (404)": 1,
+      "/api/login (400)": 1,
+      "/api/orders (403)": 2
+    },
+    "5xx_by_endpoint": {
+      "/api/login (500)": 1,
+      "/api/orders (500)": 1,
+      "/api/login (502)": 1,
+      "/api/data (500)": 3,
+      "/api/logout (500)": 1,
+      "/api/data (502)": 1,
+      "/api/logout (502)": 3,
+      "/api/orders (502)": 1,
+      "/api/users (502)": 1
+    }
+  },
   "errors5xx": [
     {
       "timestamp": "2025-06-06T06:38:30.450331",

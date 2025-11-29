@@ -5,7 +5,9 @@
   "main": "src/rate-limitter/server.js",
   "scripts": {
     "start:limiter": "node src/rate-limitter/server.js",
-    "analyze": "node src/log-analyzer/analyzer.js"
+    "analyze": "node src/log-analyzer/analyzer.js",
+    "test:cluster": "node tests/test-cluster.js",
+    "test:sequential": "node tests/test-sequential.js"
   },
 
   "keywords": [],
